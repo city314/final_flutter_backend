@@ -1,13 +1,11 @@
-# server/Dockerfile
-FROM node:20-alpine
+FROM cirrusci/flutter:3.19.6 AS build
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
-
 COPY . .
 
-EXPOSE 3000
+RUN flutter pub get
+RUN flutter build web
 
-CMD ["npm", "start"]
+FROM nginx:alpine
+COPY --from=build /app/build/web /usr/share/nginx/html
