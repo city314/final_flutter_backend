@@ -82,4 +82,50 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// GET: api/orders/user/:userId
+router.get('/user/:userId', async (req, res) => {
+  try {
+    const orders = await Order.find({ user_id: req.params.userId }).sort({ time_create: -1 });
+
+    // Gộp chi tiết từng đơn hàng
+    const OrderDetail = require('../models/OrderDetail');
+    const allDetails = await OrderDetail.find({
+      order_id: { $in: orders.map(o => o._id.toString()) }
+    });
+
+    const response = orders.map(order => {
+      const details = allDetails.filter(d => d.order_id === order._id.toString());
+      return { ...order.toObject(), items: details };
+    });
+
+    res.json(response);
+  } catch (err) {
+    console.error('❌ Error fetching orders by user:', err);
+    res.status(500).json({ message: 'Failed to fetch orders' });
+  }
+});
+
+// GET: api/orders/:orderId
+router.get('/:orderId', async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.orderId);
+    if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
+
+    const OrderDetail = require('../models/OrderDetail');
+    const details = await OrderDetail.find({ order_id: req.params.orderId });
+
+    const OrderStatusHistory = require('../models/OrderStatusHistory');
+    const history = await OrderStatusHistory.find({ order_id: req.params.orderId }).sort({ time_update: 1 });
+
+    res.json({
+      ...order.toObject(),
+      items: details,
+      history,
+    });
+  } catch (err) {
+    console.error('❌ Error fetching order by id:', err);
+    res.status(500).json({ message: 'Lỗi khi lấy chi tiết đơn hàng' });
+  }
+});
+
 module.exports = router;

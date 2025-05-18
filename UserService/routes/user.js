@@ -376,5 +376,34 @@ router.patch('/loyalty/:email', async (req, res) => {
   res.json({ message: 'Cập nhật điểm thành công', newPoint: user.loyalty_point });
 });
 
+// PUT /api/users/avatar
+router.put('/profile/avatar', async (req, res) => {
+  const { email, avatar } = req.body;
+
+  console.log('📥 Body:', req.body);
+  console.log('📧 Email:', email);
+  console.log('🖼 Avatar length:', avatar?.length);
+
+  if (!email || typeof avatar !== 'string' || avatar.trim().length < 100) {
+    return res.status(400).json({ message: 'Thiếu hoặc dữ liệu ảnh không hợp lệ' });
+  }
+
+  try {
+    const result = await User.findOneAndUpdate(
+      { email },
+      { avatar },
+      { new: true }
+    );
+
+    if (!result) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+
+    return res.status(200).json({ message: 'Cập nhật ảnh thành công', avatar: result.avatar });
+  } catch (err) {
+    console.error('❌ Lỗi khi cập nhật avatar:', err);
+    return res.status(500).json({ message: 'Lỗi server' });
+  }
+});
 
 module.exports = router;

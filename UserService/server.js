@@ -15,6 +15,10 @@ const io = socketIo(server, {
     origin: '*',
   }
 });
+
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.set('io', io);
 // Khi có kết nối socket
 io.on('connection', (socket) => {
@@ -40,8 +44,6 @@ io.on('connection', (socket) => {
 });
 const PORT = 3001;
 
-app.use(cors());
-app.use(express.json());
 app.use(bodyParser.json());
 
 // Kết nối MongoDB

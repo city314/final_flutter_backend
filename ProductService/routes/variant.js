@@ -98,4 +98,16 @@ router.get('/order/:id', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// routes/variant.js
+router.get('/bulk', async (req, res) => {
+  const ids = req.query.ids?.split(',') || [];
+  try {
+    const variants = await Variant.find({ _id: { $in: ids } });
+    res.json(variants);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch variants' });
+  }
+});
+
 module.exports = router;
