@@ -12,15 +12,17 @@
     "nodemailer": "^7.0.3",
     "nodemon": "^3.1.10",
     "socket.io": "^4.8.1",
-    "uuid": "^11.1.0"
-  },
-  "devDependencies": {
+    "uuid": "^11.1.0",
     "concurrently": "^9.1.2"
   },
   "scripts": {
-    "dev:user": "nodemon UserService/server.js",
+    "start:user":    "node UserService/server.js",
+    "start:product": "node ProductService/server.js",
+    "start:order":   "node OrderService/server.js",
+    "start": "concurrently \"npm run start:user\" \"npm run start:product\" \"npm run start:order\"",
+    "dev:user":    "nodemon UserService/server.js",
     "dev:product": "nodemon ProductService/server.js",
-    "dev:order": "nodemon OrderService/server.js",
+    "dev:order":   "nodemon OrderService/server.js",
     "dev": "concurrently \"npm run dev:user\" \"npm run dev:product\" \"npm run dev:order\""
   }
 }
