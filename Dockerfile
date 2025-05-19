@@ -12,6 +12,7 @@ COPY package*.json ./
 RUN npm ci
 
 # Copy toàn bộ mã nguồn vào thư mục làm việc
+COPY .env .env
 COPY . .
 
 # Build nếu có bước build (VD: npm run build)
