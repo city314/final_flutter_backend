@@ -52,17 +52,16 @@ router.post('/login', async (req, res) => {
   if (!user)
     return res.status(401).json({ message: 'Email không tồn tại' });
 
+  if (user.status === 'inactive') {
+    return res.status(403).json({ message: 'Tài khoản của bạn đang bị khóa' });
+  }
+
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch)
     return res.status(401).json({ message: 'Mật khẩu không đúng' });
 
   user.isActive = true; // cập nhật trạng thái isActive
   await user.save();
-//   const token = jwt.sign(
-//     { userId: user._id, role: user.role },
-//     'your_secret_key_here',
-//     { expiresIn: '7d' }
-//   );
 
   res.json({
     message: 'Đăng nhập thành công',
