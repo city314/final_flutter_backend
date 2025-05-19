@@ -9,6 +9,7 @@ const orderSchema = new mongoose.Schema({
   tax: Number,
   shipping_fee: Number,
   final_price: Number,
+  profit: Number,
   status: { type: String, enum: ['pending', 'complete', 'canceled', 'shipped', 'paid'], default: 'pending' },
   time_create: { type: Date, default: Date.now },
 });

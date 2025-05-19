@@ -274,7 +274,7 @@ router.put('/:email/addresses/:id/set-default', async (req, res) => {
 // Cập nhật tên và email người dùng
 router.put('/update-profile/:email', async (req, res) => {
   const { email } = req.params;
-  const { name, newEmail } = req.body;
+  const { name, newEmail, gender, birthday, phone } = req.body;
 
   try {
     const user = await User.findOne({ email });
@@ -289,7 +289,9 @@ router.put('/update-profile/:email', async (req, res) => {
     }
 
     user.name = name;
-    if (newEmail) user.email = newEmail;
+    user.gender = gender;
+    user.birthday = birthday;
+    user.phone = phone;
 
     await user.save();
     res.json({ message: 'Cập nhật thông tin thành công', user });
@@ -403,6 +405,36 @@ router.put('/profile/avatar', async (req, res) => {
   } catch (err) {
     console.error('❌ Lỗi khi cập nhật avatar:', err);
     return res.status(500).json({ message: 'Lỗi server' });
+  }
+});
+
+// Đổi mật khẩu sau khi đăng nhập
+router.post('/change-password', async (req, res) => {
+  const { email, oldPassword, newPassword } = req.body;
+
+  if (!email || !oldPassword || !newPassword) {
+    return res.status(400).json({ message: 'Thiếu thông tin cần thiết' });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'Người dùng không tồn tại' });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Mật khẩu cũ không đúng' });
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedNewPassword;
+    await user.save();
+
+    res.json({ message: 'Đổi mật khẩu thành công' });
+  } catch (error) {
+    console.error('Lỗi đổi mật khẩu:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
   }
 });
 
