@@ -9,8 +9,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Cài dependencies
-RUN npm install express mongoose body-parser cors dotenv uuid axios bcrypt jsonwebtoken nodemailer moment socket.io nodemon concurrently
-RUN npm install --save-dev concurrently
+RUN npm ci
 
 # Copy toàn bộ mã nguồn vào thư mục làm việc
 COPY . .
