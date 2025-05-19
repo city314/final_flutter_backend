@@ -3,6 +3,7 @@ const Product = require('../models/Product');
 const Category = require('../models/Category');
 const Brand = require('../models/Brand');
 const Variant = require('../models/Variant');
+const Review = require('../models/Review');
 const router = express.Router();
 
 // GET all products
@@ -137,6 +138,7 @@ router.get('/pagination', async (req, res) => {
       price,
       rating,
       sort,
+      search,
       skip = 0,
       limit = 20,
     } = req.query;
@@ -170,9 +172,12 @@ router.get('/pagination', async (req, res) => {
       }
     }
 
-    if (rating) {
-      const ratingValue = parseInt(rating[0]);
-      query.rating = { $gte: ratingValue };
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      query.$or = [
+        { name: searchRegex },
+        { description: searchRegex }
+      ];
     }
 
     const sortOption = {};
@@ -182,10 +187,10 @@ router.get('/pagination', async (req, res) => {
           sortOption.time_create = -1;
           break;
         case 'Giá tăng dần':
-          sortOption.lowestPrice = 1;
+          sortOption.lowest_price = 1;
           break;
         case 'Giá giảm dần':
-          sortOption.lowestPrice = -1;
+          sortOption.lowest_price = -1;
           break;
         case 'Sắp xếp theo tên từ A-Z':
           sortOption.name = 1;
@@ -196,12 +201,33 @@ router.get('/pagination', async (req, res) => {
       }
     }
 
-    const products = await Product.find(query)
+    // Bước 1: Lấy sản phẩm phù hợp
+    const rawProducts = await Product.find(query)
       .sort(sortOption)
       .skip(parseInt(skip))
       .limit(parseInt(limit));
 
-    res.json(products);
+    // Bước 2: Gắn averageRating vào từng sản phẩm
+    const productsWithRating = await Promise.all(rawProducts.map(async (p) => {
+      const reviews = await Review.find({ product_id: p._id.toString() });
+      const averageRating = reviews.length > 0
+        ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
+        : 0;
+
+      return {
+        ...p.toObject(),
+        averageRating: parseFloat(averageRating.toFixed(1)), // Làm tròn 1 chữ số
+      };
+    }));
+
+    // Bước 3: Nếu có yêu cầu lọc theo rating
+    let finalProducts = productsWithRating;
+    if (rating) {
+      const ratingThreshold = parseInt(rating[0]);
+      finalProducts = productsWithRating.filter(p => p.averageRating >= ratingThreshold);
+    }
+
+    res.json(finalProducts);
   } catch (error) {
     console.error('[Product API] Error:', error);
     res.status(500).json({ message: 'Server error' });
